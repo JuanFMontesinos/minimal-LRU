@@ -1,6 +1,7 @@
 import torch
 from pathlib import Path
 from typing import Callable, Optional, TypeVar, Dict, Tuple, Union
+from .dataloaders.sombrero import SombreroEventDetection
 from .dataloaders.lra import IMDB, ListOps, PathFinder, AAN
 from .dataloaders.basic import CIFAR10, MNIST
 from .dataloaders.copy import CopyTask
@@ -59,7 +60,8 @@ def make_data_loader(
         shuffle=shuffle,
         drop_last=drop_last,
         generator=rng,
-    )
+        num_workers=0
+        )
 
 
 def create_lra_imdb_classification_dataset(
@@ -102,6 +104,54 @@ def create_lra_imdb_classification_dataset(
         TRAIN_SIZE,
     )
 
+def create_sombrero_dataset(
+    cache_dir: Union[str, Path] = DEFAULT_CACHE_DIR_ROOT, batch_size: int = 50, seed: int = 42
+) -> ReturnType:
+    print("[*] Generating Sombrero Event Detection Dataset")
+
+    name = "sombrero_events"
+    dir_name = "/mnt/nasal01/Projects/611-CT.2278_PANAMA/data/sombrero_polaris"
+
+    dataset_obj = SombreroEventDetection(name, data_dir=dir_name)
+    dataset_obj.setup()
+
+    trn_loader = make_data_loader(
+        dataset_obj.dataset_train, dataset_obj, seed=seed, batch_size=batch_size
+    )
+    val_loader = make_data_loader(
+        dataset_obj.dataset_val,
+        dataset_obj,
+        seed=seed,
+        batch_size=batch_size,
+        drop_last=False,
+        shuffle=False,
+    )
+    tst_loader = make_data_loader(
+        dataset_obj.dataset_test,
+        dataset_obj,
+        seed=seed,
+        batch_size=batch_size,
+        drop_last=False,
+        shuffle=False,
+    )
+
+    N_CLASSES = dataset_obj.d_output
+    SEQ_LENGTH = dataset_obj.l_max
+    IN_DIM = 1
+    TRAIN_SIZE = len(dataset_obj.dataset_train)
+
+    aux_loaders = {}
+
+    return (
+        trn_loader,
+        val_loader,
+        tst_loader,
+        aux_loaders,
+        N_CLASSES,
+        SEQ_LENGTH,
+        IN_DIM,
+        TRAIN_SIZE,
+    )
 
 def create_lra_listops_classification_dataset(
     cache_dir: Union[str, Path] = DEFAULT_CACHE_DIR_ROOT, batch_size: int = 50, seed: int = 42
@@ -109,7 +159,7 @@ def create_lra_listops_classification_dataset(
     print("[*] Generating LRA-listops Classification Dataset")
 
     name = "listops"
-    dir_name = "./raw_datasets/lra_release/lra_release/listops-1000"
+    dir_name = "/mnt/pro980/resurrecting_rnns/lra_release/listops-1000"
 
     dataset_obj = ListOps(name, data_dir=dir_name)
     dataset_obj.cache_dir = Path(cache_dir) / name
@@ -595,4 +645,5 @@ Datasets = {
     "pathx-classification": create_lra_pathx_classification_dataset,
     # Synthetic memory tasks.
     "copy-classification": create_copy_classification_dataset,
+    "sombrero": create_sombrero_dataset
 }

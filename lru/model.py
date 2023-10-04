@@ -168,6 +168,7 @@ class ClassificationModel(nn.Module):
     pooling: str = "mean"  # pooling mode
     norm: str = "batch"  # type of normaliztion
     multidim: int = 1  # number of outputs
+    activation: str = "softmax"  # activation function
 
     def setup(self):
         self.encoder = StackedEncoderModel(
@@ -191,9 +192,12 @@ class ClassificationModel(nn.Module):
         x = self.decoder(x)
         if self.multidim > 1:
             x = x.reshape(-1, self.d_output, self.multidim)
-        return nn.log_softmax(x, axis=-1)
-
-
+        if self.activation == 'softmax':
+            return nn.log_softmax(x, axis=-1)
+        elif self.activation == 'sigmoid':
+            return nn.sigmoid(x)
+    
+     
 # Here we call vmap to parallelize across a batch of input sequences
 BatchClassificationModel = nn.vmap(
     ClassificationModel,

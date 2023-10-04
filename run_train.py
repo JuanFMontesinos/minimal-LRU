@@ -42,6 +42,7 @@ if __name__ == "__main__":
     parser.add_argument("--n_layers", type=int, default=4, help="Number of layers in the network")
     parser.add_argument("--d_model", type=int, default=256, help="Number of features")
     parser.add_argument("--d_hidden", type=int, default=128, help="Latent size of recurent unit")
+    parser.add_argument("--activation", type=str, default='softmax', help="Activation of the last layer")
     parser.add_argument(
         "--pooling",
         type=str,

@@ -154,6 +154,8 @@ def compute_accuracies(logits, labels, masks):
             batched_average_mask(masks * compute_accuracy(logits, labels).mean(axis=-1), masks),
             axis=-1,
         )
+    if len(logits.shape) == 3:
+        return jnp.sum(batched_average_mask(masks * compute_accuracy(logits, labels),masks), axis=-1)
     elif len(logits.shape) == 2:
         return jnp.mean(compute_accuracy(logits, labels))
 
@@ -164,6 +166,8 @@ def loss_fn(logits, labels, masks):
     """
     if len(logits.shape) == 2:  # for classification tasks
         losses = cross_entropy_loss(logits, labels)
+    if len(logits.shape) == 3:  # Sombrero
+        losses = masks * cross_entropy_loss(logits, labels)
     if len(logits.shape) == 4:  # for tasks with multidimensional dense targets
         losses = masks * cross_entropy_loss(logits, labels).mean(axis=-1)
         losses = batched_average_mask(losses, masks)  # average over time
@@ -188,7 +192,11 @@ def prep_batch(batch, seq_len, in_dim):
     num_pad = seq_len - inputs.shape[1]
     if num_pad > 0:
         inputs = jnp.pad(inputs, ((0, 0), (0, num_pad)), "constant", constant_values=(0,))
-
+        inputs=inputs[...,None]
+        if seq_len - targets.shape[1] > 0:
+            targets = jnp.pad(
+                targets, ((0, 0), (0, seq_len - targets.shape[1])), "constant", constant_values=(0,)
+            )
     # Inputs size is [n_batch, seq_len] or [n_batch, seq_len, in_dim].
     # If there are not three dimensions and trailing dimension is not equal to in_dim then
     # transform into one-hot.  This should be a fairly reliable fix.

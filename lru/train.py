@@ -90,6 +90,7 @@ def train(args):
             pooling=args.pooling,
             norm=args.norm,
             multidim=1 + dense_targets,
+            activation = args.activation
         )
 
     # Initialize training state
@@ -132,7 +133,7 @@ def train(args):
 
         train_rng, skey = random.split(train_rng)
         state, train_loss, step = train_epoch(
-            state, skey, model_cls, trainloader, seq_len, in_dim, args.norm, lr_params
+             state, skey, model_cls, trainloader, seq_len, in_dim, args.norm, lr_params
         )
 
         if valloader is not None:
