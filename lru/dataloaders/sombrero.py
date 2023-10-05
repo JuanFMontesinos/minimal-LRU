@@ -44,6 +44,10 @@ class SombreroDataset(torch.utils.data.Dataset):
         hf_key = 'heatflow' if 'heatflow' in measurement else 'heatflow*weight^-1'
         evaluation = self.evaluations[self.evaluations.measurement==key]
         hf = measurement[hf_key].to_numpy()
+        if hf.max() == hf.min():
+            pass
+        else:
+            hf = (hf - hf.min()) / (hf.max() - hf.min())
         hf = torch.from_numpy(hf).float()
         gt = torch.zeros_like(hf,dtype=torch.long)
         for row in evaluation.itertuples():

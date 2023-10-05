@@ -9,3 +9,4 @@ pydub
 datasets
 tqdm
 wandb
+plotly
